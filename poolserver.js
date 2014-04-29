@@ -61,7 +61,7 @@ server.on('connection', function(socket) {
         if(entry.sock != socket) socket.write(entry.user+'\n');
       });
     }else if(info[0] == 'who'){
-      seek,forEach(function(player){
+      seek.forEach(function(player){
         if(player.sock != socket) socket.write(player.user+'\n');
       });
     }else{
