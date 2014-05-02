@@ -34,12 +34,14 @@ server.on('connection', function(socket) {
         break;
 
       case 'start':
-        if(seek.length > 0){
-          draftto(now_playing, info[1], take1from(seek));
-        }else{
-          socket.write('Waiting opponent\n');
-          seek.push(info[1]);
-        }
+        if(seek.indexOf(info[1]) == -1){
+          if(seek.length > 0){
+            draftto(now_playing, info[1], take1from(seek));
+          }else{
+            socket.write('Waiting opponent\n');
+            seek.push(info[1]);
+          }
+        }else socket.write('Waiting opponent\n');
         break;
 
       case 'play':
@@ -88,7 +90,7 @@ server.on('connection', function(socket) {
       case 'who':
         socket.write('List of opponent(s):\n');
         for(var opponent in seek)
-          if(opponent != info[1]) socket.write(seek[opponent]+'\n');
+          if(seek[opponent] != info[1]) socket.write(seek[opponent]+'\n');
         break;
 
       default:
@@ -100,11 +102,19 @@ server.on('connection', function(socket) {
   socket.on('close', function() {
     console.log(socket.name+' disconnected!');
     var opponent = now_playing[socket.name];
-    if(opponent) 
-      opponent.sock.write('Opponent: '+socket.name+' disconnected!\n');
+    if(opponent){
+      try{
+        opponent.sock.write('Opponent: '+socket.name+' disconnected!\n');
+      }catch(err){
+        console.log('on close error: '+err);
+      }
+    }
     delete users[socket.name];
     console.log(socket.name+"'s connection closed.");
-    //console.log('connection closed.');
+  });
+
+  socket.on('error', function(err){
+    console.log(socket.name+' is '+err);
   });
 
 });
@@ -138,8 +148,11 @@ function draftto(object, challenger, opponent){
 
 function win(winner, from){
   console.log(winner+' wins.');
-  var opponent = now_playing[winner].opponent;
+  var opp = from[winner];
+  var opponent;
+  if(opp){
+    var opponent = opp.opponent;
+    users[opponent].playing = false; }
   users[winner].playing = false;
-  users[opponent].playing = false;
-  delete now_playing[winner];
-  delete now_playing[opponent]; }
+  delete from[winner];
+  delete from[opponent]; }
