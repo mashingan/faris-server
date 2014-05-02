@@ -88,7 +88,7 @@ server.on('connection', function(socket) {
       case 'who':
         socket.write('List of opponent(s):\n');
         for(var opponent in seek)
-          if(opponent != info[1]) socket.write(opponent+'\n');
+          if(opponent != info[1]) socket.write(seek[opponent]+'\n');
         break;
 
       default:
