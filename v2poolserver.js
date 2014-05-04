@@ -22,15 +22,26 @@ server.on('connection', function(socket) {
       case 'init':
         socket.name = info[1];
         var obj = {};
-        try{
-          obj = JSON.parse(info[2]);
-        }catch(err){
-          obj.type = '1v1';
-          obj.playing = false;
-        }finally{
+        var player = now_playing[info[1]];
+        if(player){
+          clearTimeout(player.timer);
           obj.sock = socket;
-          users[info[1]] = obj; }
-        socket.write('parsing ok\n');
+          obj.type = '1v1';
+          obj.playing = true;
+          now_playing[player.opponent].sock = Object.create(socket);
+          users[info[1]] = obj;
+        }else{
+          try{
+            obj = JSON.parse(info[2]);
+          }catch(err){
+            obj.type = '1v1';
+            obj.playing = false;
+          }finally{
+            obj.sock = socket;
+            users[info[1]] = obj;
+          }
+          socket.write('parsing ok\n');
+        }
         break;
 
       case 'start':
@@ -61,11 +72,17 @@ server.on('connection', function(socket) {
 
       case 'with':
         var opp_name;
-        for(var i in seek)
-          if(seek[i] == info[2])
-            opp_name = seek.splice(i, 1)[0];
+        if (seek.length > 0){
+          var pos = seek.indexOf(info[2]);
+          if(pos >= 0)
+            opp_name = seek.splice(pos, 1)[0];
+        }
        
-        draftto(now_playing, info[1], opp_name);
+        if(opp_name)
+          draftto(now_playing, info[1], opp_name);
+        else
+          socket.write("There's no opponent whose name "+info[2]
+              +'. Check again.\n');
         break;
 
       case 'quit':
@@ -105,6 +122,9 @@ server.on('connection', function(socket) {
     if(opponent){
       try{
         opponent.sock.write('Opponent: '+socket.name+' disconnected!\n');
+        opponent.timer = setTimeout(function(){
+          opponent.sock.write('win');
+        }, 20000);
       }catch(err){
         console.log('on close error: '+err);
       }
@@ -138,9 +158,9 @@ function draftto(object, challenger, opponent){
   cha.playing = true;
   opp.playing = true;
   object[challenger] = {opponent: opponent,
-    sock: Object.create(opp.sock) };
+    sock: Object.create(opp.sock), timer: false };
   object[opponent] = {opponent: challenger,
-    sock: Object.create(cha.sock) };
+    sock: Object.create(cha.sock), timer: false };
   opp.sock.write('You are now playing with: '
       +challenger+'.\n');
   cha.sock.write('You are now playing with: '
@@ -152,7 +172,7 @@ function win(winner, from){
   var opponent;
   if(opp){
     var opponent = opp.opponent;
-    users[opponent].playing = false; }
-  users[winner].playing = false;
+    opp.sock.write('You lose.\n');
+  };
   delete from[winner];
   delete from[opponent]; }

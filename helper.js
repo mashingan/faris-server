@@ -44,9 +44,16 @@ function create_socket(name, port, host){
   socket.name = name;
   socket.setEncoding('utf8');
   socket.on('data', function(data){
-    console.log(name+' reply: '+data); });
+    if(data == 'win'){
+      console.log(name+ ' reply: You win.');
+      send(socket, 'win');
+    }else{
+      console.log(name+' reply: '+data);
+    }
+  });
   socket.on('connect', function(){
-    send(socket, 'init', ''); });
+    send(socket, 'init', '');
+  });
   if(host)
     socket.connect(port, host);
   else
