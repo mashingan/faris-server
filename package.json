@@ -1,6 +1,6 @@
 {
   "name": "pool-message-router",
-  "version": "0.7.256",
+  "version": "0.7.294",
   "main": "./v2poolserver",
   "dependencies": {},
   "private": "true"

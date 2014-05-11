@@ -90,24 +90,23 @@ server.on('connection', function(socket) {
         var opp;
         if(player){
           opp = player.opponent;
-          users[info[1]].playing = false;
-          users[opp].playing = false;
+          win(opp, now_playing);
         }
-        delete now_playing[info[1]];
-        delete now_playing[opp];
         socket.destroy();
         break;
 
       case 'list':
         socket.write('List of all players:\n');
-        for(var user in users)
-          if(user != info[1]) socket.write(user+'\n');
+        for (var name in users)
+          if(name != info[1])
+            socket.write(name+'\n');
         break;
 
       case 'who':
         socket.write('List of opponent(s):\n');
-        for(var opponent in seek)
-          if(seek[opponent] != info[1]) socket.write(seek[opponent]+'\n');
+        for (var i in seek)
+          if(seek[i] != info[1])
+            socket.write(seek[i]+'\n');
         break;
 
       default:
@@ -175,4 +174,5 @@ function win(winner, from){
     opp.sock.write('You lose.\n');
   };
   delete from[winner];
-  delete from[opponent]; }
+  delete from[opponent];
+}
